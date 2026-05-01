@@ -5,6 +5,7 @@ FakeReview Buster v2 — Flask Backend
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import pandas as pd, io
+import traceback
 
 from detector import detector
 
@@ -19,24 +20,32 @@ def index():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_single():
-    data = request.get_json()
-    if not data or 'review' not in data:
-        return jsonify({"error": "No review text provided"}), 400
-    review = data['review'].strip()
-    if len(review) < 5:
-        return jsonify({"error": "Review too short to analyze"}), 400
-    return jsonify(detector.predict(review))
+    try:
+        data = request.get_json()
+        if not data or 'review' not in data:
+            return jsonify({"error": "No review text provided"}), 400
+        review = data['review'].strip()
+        if len(review) < 5:
+            return jsonify({"error": "Review too short to analyze"}), 400
+        return jsonify(detector.predict(review))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Analysis failed: {str(e)}"}), 500
 
 
 @app.route('/api/analyze-batch', methods=['POST'])
 def analyze_batch():
-    data = request.get_json()
-    if not data or 'reviews' not in data:
-        return jsonify({"error": "No reviews provided"}), 400
-    reviews = data['reviews']
-    if not isinstance(reviews, list) or not reviews:
-        return jsonify({"error": "Reviews must be a non-empty list"}), 400
-    return jsonify(detector.analyze_batch(reviews))
+    try:
+        data = request.get_json()
+        if not data or 'reviews' not in data:
+            return jsonify({"error": "No reviews provided"}), 400
+        reviews = data['reviews']
+        if not isinstance(reviews, list) or not reviews:
+            return jsonify({"error": "Reviews must be a non-empty list"}), 400
+        return jsonify(detector.analyze_batch(reviews))
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Batch analysis failed: {str(e)}"}), 500
 
 
 @app.route('/api/upload-csv', methods=['POST'])
@@ -69,7 +78,11 @@ def upload_csv():
 
 @app.route('/api/model-stats', methods=['GET'])
 def model_stats():
-    return jsonify(detector.get_model_stats())
+    try:
+        return jsonify(detector.get_model_stats())
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model stats failed: {str(e)}"}), 500
 
 
 @app.route('/api/sample', methods=['GET'])
