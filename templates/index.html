@@ -370,9 +370,10 @@ async function analyzeSingle() {
   try {
     const res  = await fetch('/api/analyze', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({review:text})});
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Server error');
     renderSingle(data);
   } catch(e) {
-    document.getElementById('result-area').innerHTML = `<div class="loading" style="color:var(--red)">⚠ Cannot connect — make sure Flask is running on port 5000</div>`;
+    document.getElementById('result-area').innerHTML = `<div class="loading" style="color:var(--red)">⚠ ${e.message || 'Cannot connect to the analysis server'}</div>`;
   } finally {
     btn.disabled = false; btn.innerHTML = 'Analyze Review';
   }
